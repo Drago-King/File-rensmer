@@ -1,4 +1,6 @@
 import os
+import threading
+from flask import Flask
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
     ApplicationBuilder,
@@ -9,11 +11,25 @@ from telegram.ext import (
     filters,
 )
 
+# Telegram Bot Token
 BOT_TOKEN = os.getenv("BOT_TOKEN")
+
+# Flask App for Render pinging
+app_flask = Flask(__name__)
+
+@app_flask.route('/')
+def home():
+    return "Bot is alive!"
+
+def run_flask():
+    app_flask.run(host='0.0.0.0', port=10000)
+
+# File storage
 TEMP_FOLDER = "downloads"
 os.makedirs(TEMP_FOLDER, exist_ok=True)
 user_files = {}
 
+# Telegram Bot Handlers
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Send me a file and I’ll help you rename it!")
 
@@ -85,7 +101,10 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.edit_message_text(f"✅ File renamed and sent as `{data['new_name']}`.", parse_mode="Markdown")
         os.remove(new_path)
 
+# Start everything
 if __name__ == '__main__':
+    threading.Thread(target=run_flask).start()
+
     app = ApplicationBuilder().token(BOT_TOKEN).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.Document.ALL, handle_file))
