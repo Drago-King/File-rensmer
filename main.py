@@ -1,11 +1,16 @@
 import os
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import ApplicationBuilder, MessageHandler, filters, CommandHandler, ContextTypes, CallbackQueryHandler
+from telegram.ext import (
+    ApplicationBuilder,
+    CommandHandler,
+    MessageHandler,
+    CallbackQueryHandler,
+    ContextTypes,
+    filters,
+)
 
-BOT_TOKEN = "YOUR_BOT_TOKEN_HERE"  # Replace with your bot token
+BOT_TOKEN = os.getenv("BOT_TOKEN")  # Read from Render environment variable
 TEMP_FOLDER = "downloads"
-
-# Ensure download folder exists
 os.makedirs(TEMP_FOLDER, exist_ok=True)
 
 user_files = {}
@@ -20,7 +25,7 @@ async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     file_id = file.file_id
-    file_name = file.file_name
+    file_name = file.file_name or "file"
 
     user_id = update.message.from_user.id
     user_files[user_id] = {
@@ -85,7 +90,7 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
 if __name__ == '__main__':
     app = ApplicationBuilder().token(BOT_TOKEN).build()
     app.add_handler(CommandHandler("start", start))
-    app.add_handler(MessageHandler(filters.Document.ALL | filters.Video.ALL | filters.Audio.ALL, handle_file))
+    app.add_handler(MessageHandler(filters.Document.ALL | filters.Audio.ALL | filters.VIDEO, handle_file))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
     app.add_handler(CallbackQueryHandler(button))
     print("Bot is running...")
