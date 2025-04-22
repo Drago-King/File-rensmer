@@ -1,5 +1,4 @@
 import os
-import telegram
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
     ApplicationBuilder,
@@ -10,21 +9,18 @@ from telegram.ext import (
     filters,
 )
 
-print("PTB VERSION:", telegram.__version__)  # Debugging help
-
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 TEMP_FOLDER = "downloads"
 os.makedirs(TEMP_FOLDER, exist_ok=True)
-
 user_files = {}
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Send me a file and I’ll help you rename it!")
 
 async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    file = update.message.document or update.message.video or update.message.audio
+    file = update.message.document
     if not file:
-        await update.message.reply_text("Please send a valid document, video, or audio file.")
+        await update.message.reply_text("Please send the file as a document.")
         return
 
     file_id = file.file_id
@@ -92,7 +88,7 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
 if __name__ == '__main__':
     app = ApplicationBuilder().token(BOT_TOKEN).build()
     app.add_handler(CommandHandler("start", start))
-    app.add_handler(MessageHandler(filters.Document.ALL | filters.Video.ALL | filters.Audio.ALL, handle_file))
+    app.add_handler(MessageHandler(filters.Document.ALL, handle_file))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
     app.add_handler(CallbackQueryHandler(button))
     print("Bot is running...")
